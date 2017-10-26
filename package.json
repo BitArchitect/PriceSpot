@@ -1,0 +1,29 @@
+{
+  "name": "pricespot",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "nodemon server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/davirk21/PriceSpot.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/davirk21/PriceSpot/issues"
+  },
+  "homepage": "https://github.com/davirk21/PriceSpot#readme",
+  "dependencies": {
+    "bluebird": "^3.5.1",
+    "body-parser": "^1.18.2",
+    "express": "^4.16.2",
+    "mysql": "^2.15.0",
+    "pg": "^7.3.0",
+    "pg-promise": "^5.9.7",
+    "redis": "^2.8.0",
+    "request": "^2.83.0"
+  }
+}
