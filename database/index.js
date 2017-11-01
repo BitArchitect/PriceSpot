@@ -153,6 +153,7 @@ var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
       callback(err)
 
     }else {
+      
       callback(res.rows)
     }
   })

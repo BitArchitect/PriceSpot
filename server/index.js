@@ -33,7 +33,7 @@ var formatDate = function(date){
 //get for particular z
 app.get('/inspectionscore/*', function(req, res) {
   console.log("PARAM", req.query)
-  var zip = !req.query.zip ? '94102' : req.query.zip ;
+  var zip = !req.query.zip ? '94102' : req.query.zip;
   var startDate = !req.query.startDate ? formatDate(createDateBack(3)) : req.query.startDate
   var endDate = !req.query.endDate ? formatDate(new Date()) : req.query.endDate
   var granularity = !granularity ? 'week' : req.query.granularity;
