@@ -11,7 +11,7 @@
     "url": "git+https://github.com/davirk21/PriceSpot.git"
   },
   "engines": {
-    "node": ">=7.6.0"
+    "node": "8.6.0"
   },
   "author": "",
   "license": "ISC",

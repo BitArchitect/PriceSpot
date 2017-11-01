@@ -50,7 +50,7 @@ app.get('/inspectionscore/*', function(req, res) {
         res.send(result);
         var latency = Date.now() - start
         console.log('latency', latency);
-        redis.set(zip, JSON.stringify(result), 'EX', 50, console.log('OK'));
+        redis.set(zip, JSON.stringify(result), 'EX', 6*60*60 , console.log('OK'));
         //res.send(JSON.parse(result));
       })
     } else{
