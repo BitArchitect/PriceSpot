@@ -145,7 +145,7 @@ var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
   from restaurantscore
   where business_zip = '${zip}' and inspection_date > '${startDate}' and inspection_date < '${endDate}'
   group by ${granularity}
-  order by ${granularity} desc;`;
+  order by ${granularity};`;
   client.query(query, function (err, res) {
     if(err){
       console.log("THIS ERROR", err);
