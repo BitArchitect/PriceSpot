@@ -1,12 +1,15 @@
- const { Client } = require('pg')
+const pg = require('pg')
 const pgp = require('pg-promise')();
 
+if(process.env.DATABASE_URL){
+  pg.defaults.ssl = true;
+}
 
- const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/test';
+const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/test';
 const clientPromise = pgp(process.env.DATABASE_URL || 'postgresql://localhost:5432/test');
 
 
-const client = new Client({
+const client = new pg.Client({
   connectionString: connectionString,
 })
 client.connect()
