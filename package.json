@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon server/index.js"
+    "test": "nodemon server/index.js",
+    "worker": "node clock.js",
+    "start": "node server/index.js"
   },
   "repository": {
     "type": "git",
