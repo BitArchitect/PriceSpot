@@ -25,7 +25,7 @@ let getRestaurantData = (datewithT, callback) => {
     url: `https://data.sfgov.org/resource/sipz-fjte.json?inspection_date=${datewithT}`,
     type: 'GET',
     qs: {
-      '$$app_token': key, 
+      '$$app_token': key || 'n4t5ommVtFTmQWxUNTaFfgydB', 
       '$limit': '5000'
     }
   };
@@ -41,7 +41,7 @@ let getRestaurantData = (datewithT, callback) => {
   });
 }
 
-let worker1 = async function(callback){
+let worker1 = async (callback) => {
   console.log("step 1 in worker")
   var datesArray = [];
   var date = new Date();
@@ -49,7 +49,7 @@ let worker1 = async function(callback){
   let result = await db.checkRowCountForDate(formatDate(date))
  
  
-  var oldestDate = new Date('2014-01-01');
+  var oldestDate = new Date('2014-10-24');
  
     while (+result[0].count === 0 && date >= oldestDate ) {
       console.log("Inside While in worker")
@@ -81,7 +81,7 @@ let worker1 = async function(callback){
     })
   
 }
-console.log(formatDateForAPI('2017-10-29 00:00:00'));
+
 module.exports = {
   worker1,
   getRestaurantData

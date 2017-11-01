@@ -1,2 +1,2 @@
 web: node server/index.js
-worker: node clock.js
+clock: node clock.js
