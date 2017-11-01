@@ -7,7 +7,7 @@ var gen = require('./generate/generator.js')
 
 var job = new CronJob({
   cronTime: '00 00 00 * * 7', 
-  onTick: gov.worker1,
+  onTick: gov.worker1(),
   start: true, 
   timeZone: 'America/Los_Angeles'
 });
