@@ -33,7 +33,6 @@ var formatDate = function(date){
   var year = date.getFullYear();
   var result =''; 
   result = `${year}-${month}-${day} 00:00:00`
-
   return result
 }
 
@@ -56,7 +55,6 @@ app.get('/inspectionscore/*', function(req, res) {
   redis.get(zip, function(err, reply){
 
     if(reply === null) {
-      statsDClient.increment('.service.health.query.fail');
       console.log("No Cache, please wait");
 
       //Goes into the database to get the data per req.query
@@ -70,6 +68,7 @@ app.get('/inspectionscore/*', function(req, res) {
         console.log("Length", result.length);
         var latency = Date.now() - start
         statsDClient.timing('.service.health.query.latency_ms', latency);
+        statsDClient.increment('.service.health.query.db');
         res.send(result);
         //console.log('latency', latency);
         redis.set(zip, JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
