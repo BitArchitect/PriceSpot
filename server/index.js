@@ -6,6 +6,14 @@ const redis = require ('../database/redis.js').client;
 const helper = require ('../helper/gov.js');
 
 
+
+const statsD = require ('node-statsd');
+const statsDClient = new statsD ({
+  host: 'statsd.hostedgraphite.com',
+  port: 8125,
+  prefix: process.env.HOSTEDGRAPHITE_APIKEY
+})
+
 const app = express()
 app.use(bodyParser.json());
 let port = process.env.PORT || 3000;
@@ -30,6 +38,7 @@ var formatDate = function(date){
 }
 
 
+
 //get for particular z
 app.get('/inspectionscore/*', function(req, res) {
   console.log("PARAM", req.query)
@@ -42,10 +51,13 @@ app.get('/inspectionscore/*', function(req, res) {
   var latency;
 
   redis.get(zip, function(err, reply){
-    //console.log("typeOF", reply)
+
     if(reply === null) {
+
       console.log("No Cache, please wait");
+
       db.getByZipByGran(zip,startDate, endDate, granularity, function(result){
+
         console.log("Length", result.length);
         res.send(result);
         var latency = Date.now() - start
@@ -54,8 +66,10 @@ app.get('/inspectionscore/*', function(req, res) {
         //res.send(JSON.parse(result));
       })
     } else{
-      console.log("reply")
       var latency = Date.now() - start
+      console.log("reply")
+      statsDClient.timing('.service.health.query.latency_ms', latency);
+      statsDClient.increment('.servie.health.query.cache');
       console.log('latency', latency);
       res.send(reply);
     }
