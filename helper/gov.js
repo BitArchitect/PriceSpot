@@ -42,7 +42,7 @@ let getRestaurantData = (datewithT, callback) => {
 }
 
 let worker1 = async function(callback){
-
+  console.log("step 1 in worker")
   var datesArray = [];
   var date = new Date();
   
@@ -52,7 +52,7 @@ let worker1 = async function(callback){
   var oldestDate = new Date('2014-01-01');
  
     while (+result[0].count === 0 && date >= oldestDate ) {
-
+      console.log("Inside While in worker")
       datesArray.push(formatDate(date));
       date.setDate(date.getDate()-1);
       result = await db.checkRowCountForDate(formatDate(date))

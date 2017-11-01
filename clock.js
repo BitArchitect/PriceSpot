@@ -8,8 +8,8 @@ var gen = require('./generate/generator.js')
 var job = new CronJob(
   '00 00 00 * * 7', 
   function() {
-    gov.worker1();
     console.log('worker is starting');
+    gov.worker1();
   },
   function() {
     console.log("worker is finish");
