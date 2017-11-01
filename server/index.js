@@ -42,6 +42,9 @@ var formatDate = function(date){
 //get for particular z
 app.get('/inspectionscore/*', function(req, res) {
   console.log("PARAM", req.query)
+
+  statsDClient.increment('.service.health.query.all')
+  //re.query parmaters from client, if none passed , then set to default
   var zip = !req.query.zip ? '94102' : req.query.zip;
   var startDate = !req.query.startDate ? formatDate(createDateBack(3)) : req.query.startDate
   var endDate = !req.query.endDate ? formatDate(new Date()) : req.query.endDate
@@ -49,28 +52,37 @@ app.get('/inspectionscore/*', function(req, res) {
 
   var start = Date.now();
   var latency;
-
+  //Checking the redis if data exgist for the zip
   redis.get(zip, function(err, reply){
 
     if(reply === null) {
-
+      statsDClient.increment('.service.health.query.fail');
       console.log("No Cache, please wait");
 
-      db.getByZipByGran(zip,startDate, endDate, granularity, function(result){
+      //Goes into the database to get the data per req.query
+      db.getByZipByGran(zip,startDate, endDate, granularity, function(err, result){
+        if(err) {
+          console.log("err",err)
+          statsDClient.increment('.service.health.query.fail');
+          return;
+        } 
 
         console.log("Length", result.length);
-        res.send(result);
         var latency = Date.now() - start
-        console.log('latency', latency);
-        redis.set(zip, JSON.stringify(result), 'EX', 6*60*60 , console.log('OK'));
-        //res.send(JSON.parse(result));
+        statsDClient.timing('.service.health.query.latency_ms', latency);
+        res.send(result);
+        //console.log('latency', latency);
+        redis.set(zip, JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
+        
       })
     } else{
+
+      //has redis cache data to serve to the client 
       var latency = Date.now() - start
       console.log("reply")
       statsDClient.timing('.service.health.query.latency_ms', latency);
-      statsDClient.increment('.servie.health.query.cache');
-      console.log('latency', latency);
+      statsDClient.increment('.service.health.query.cache');
+      //console.log('latency', latency);
       res.send(reply);
     }
   })
