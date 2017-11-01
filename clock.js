@@ -3,7 +3,7 @@ var gov = require('./helper/gov.js');
 var gen = require('./generate/generator.js')
 
 
-new CronJob(
+var job = new CronJob(
   '00 00 00 * * 7', 
   function() {
     gov.worker1();
@@ -14,3 +14,6 @@ new CronJob(
   }, 
   true, 
   'America/Los_Angeles');
+
+job.start()
+console.log('fire instance clock job status', job.running);
