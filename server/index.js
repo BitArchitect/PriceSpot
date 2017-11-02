@@ -63,16 +63,16 @@ app.get('/inspectionscore/*', function(req, res) {
           console.log("err",err)
           statsDClient.increment('.service.health.query.fail');
           return;
-        } 
+        } else { 
 
-        console.log("Length", result.length);
-        var latency = Date.now() - start
-        statsDClient.timing('.service.health.query.latency_ms', latency);
-        statsDClient.increment('.service.health.query.db');
-        res.send(result);
-        //console.log('latency', latency);
-        redis.set(zip, JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
-        
+          console.log("Length", result.length);
+          var latency = Date.now() - start
+          statsDClient.timing('.service.health.query.latency_ms', latency);
+          statsDClient.increment('.service.health.query.db');
+          res.send(result);
+          //console.log('latency', latency);
+          redis.set(zip, JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
+        }
       })
     } else{
 
