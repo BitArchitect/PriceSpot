@@ -149,7 +149,7 @@ var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
   client.query(query, function (err, res) {
     if(err){
       console.log("THIS ERROR", err);
-      console.log('theis was the query', query);
+      console.log('this was the query', query);
       callback(err, null)
 
     }else {

@@ -38,7 +38,7 @@ var formatDate = function(date){
 
 
 
-//get for particular z
+//get for particular zip code
 app.get('/inspectionscore/*', function(req, res) {
   console.log("PARAM", req.query)
 
@@ -51,17 +51,18 @@ app.get('/inspectionscore/*', function(req, res) {
 
   var start = Date.now();
   var latency;
-  //Checking the redis if data exgist for the zip
-  redis.get(zip, function(err, reply){
+  //Checking the redis if data exist for the zip
+  redis.get(JSON.stringify(req.query), function(err, reply){
 
     if(reply === null) {
+
       console.log("No Cache, please wait");
 
       //Goes into the database to get the data per req.query
       db.getByZipByGran(zip,startDate, endDate, granularity, function(err, result){
         if(err) {
-          console.log("err",err)
           statsDClient.increment('.service.health.query.fail');
+          console.log("err",err)
           return;
         } else { 
 
@@ -71,7 +72,7 @@ app.get('/inspectionscore/*', function(req, res) {
           statsDClient.increment('.service.health.query.db');
           res.send(result);
           //console.log('latency', latency);
-          redis.set(zip, JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
+          redis.set(JSON.stringify(req.query), JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
         }
       })
     } else{
