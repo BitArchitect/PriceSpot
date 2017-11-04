@@ -8,4 +8,4 @@ setInterval(()=>{
       console.log(body);
     }
   })
-},20);
+},100);
