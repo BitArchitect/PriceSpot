@@ -3,21 +3,8 @@ const bodyParser = require('body-parser');
 const db = require ('../database/index.js')
 const gen = require ('../generate/generator.js');
 const key = process.env.DATA_SF_KEY;
+const util = require('../utility/util.js')
 ////https://data.sfgov.org/resource/sipz-fjte.json?$where=inspection_date > '2017-06-10T12:00:00' AND  inspection_date  < '2017-09-10T12:00:00'
-var formatDate = function(date){
-  var day = date.getDate();
-  var month = date.getMonth()+1;
-  var year = date.getFullYear();
-  var result =''; 
-  result = `${year}-${month < 10 ? '0'+ month : month }-${day < 10? '0'+day: day} 00:00:00`
-  return result
-}
-
-var formatDateForAPI = function(datewithoutT){
-  var str = datewithoutT.split('');
-  str.splice(10,1,'T');
-  return str.join('');
-}
 
 let getRestaurantData = (datewithT, callback) => {
 
@@ -46,7 +33,7 @@ let worker1 = async (callback) => {
   var datesArray = [];
   var date = new Date();
   
-  let result = await db.checkRowCountForDate(formatDate(date))
+  let result = await db.checkRowCountForDate(util.formatDate(date))
  
  
   var oldestDate = new Date('2014-10-24');
@@ -55,14 +42,14 @@ let worker1 = async (callback) => {
       console.log("Inside While in worker")
       datesArray.push(formatDate(date));
       date.setDate(date.getDate()-1);
-      result = await db.checkRowCountForDate(formatDate(date))
+      result = await db.checkRowCountForDate(util.formatDate(date))
     }
 
 
     console.log("Days Missing", datesArray);
 
     datesArray.forEach(function(date) {
-      var apiDate = formatDateForAPI(date);
+      var apiDate = util.formatDateForAPI(date);
       //console.log("APIDATE", apiDate);
 
       getRestaurantData(apiDate,function(err, result){

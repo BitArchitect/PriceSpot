@@ -4,8 +4,7 @@ const db = require ('../database/index.js');
 const govData = require ('../helper/gov.js');
 const redis = require ('../database/redis.js').client;
 const helper = require ('../helper/gov.js');
-
-
+const util = require ('../utility/util.js')
 
 const statsD = require ('node-statsd');
 const statsDClient = new statsD ({
@@ -19,73 +18,61 @@ app.use(bodyParser.json());
 let port = process.env.PORT || 3000;
 
 
-//DATE FORMATERS
-var createDateBack = function(monthback){
-  monthback = monthback * -1;
-  var date = new Date(); 
-  date.setMonth(date.getMonth() + monthback);
-  return date; 
-}
-
-var formatDate = function(date){
-  var day = date.getDate();
-  var month = date.getMonth()+1;
-  var year = date.getFullYear();
-  var result =''; 
-  result = `${year}-${month}-${day} 00:00:00`
-  return result
-}
-
-
-
+//console.log("localredis", redis);
 //get for particular zip code
+
 app.get('/inspectionscore/*', function(req, res) {
   console.log("PARAM", req.query)
 
   statsDClient.increment('.service.health.query.all')
   //re.query parmaters from client, if none passed , then set to default
   var zip = !req.query.zip ? '94102' : req.query.zip;
-  var startDate = !req.query.startDate ? formatDate(createDateBack(3)) : req.query.startDate
-  var endDate = !req.query.endDate ? formatDate(new Date()) : req.query.endDate
-  var granularity = !granularity ? 'week' : req.query.granularity;
+  var startDate = !req.query.startDate ? util.formatDate(util.createDateBack(3)) : req.query.startDate
+  var endDate = !req.query.endDate ? util.formatDate(new Date()) : req.query.endDate
+  var granularity = !req.query.granularity ? 'week' : req.query.granularity;
 
   var start = Date.now();
   var latency;
+
+  //check if the redis is on ?
+  //if(redis) 
   //Checking the redis if data exist for the zip
-  redis.get(JSON.stringify(req.query), function(err, reply){
 
-    if(reply === null) {
+    redis.get(JSON.stringify(req.query), function(err, reply){
 
-      console.log("No Cache, please wait");
+      if(reply === null) {
 
-      //Goes into the database to get the data per req.query
-      db.getByZipByGran(zip,startDate, endDate, granularity, function(err, result){
-        if(err) {
-          statsDClient.increment('.service.health.query.fail');
-          console.log("err",err)
-          return;
-        } else { 
+        console.log("No Cache, please wait");
 
-          console.log("Length", result.length);
-          var latency = Date.now() - start
-          statsDClient.timing('.service.health.query.latency_ms', latency);
-          statsDClient.increment('.service.health.query.db');
-          res.send(result);
-          //console.log('latency', latency);
-          redis.set(JSON.stringify(req.query), JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
-        }
-      })
-    } else{
+        //Goes into the database to get the data per req.query
+        db.getByZipByGran(zip,startDate, endDate, granularity, function(err, result){
+          if(err) {
+            statsDClient.increment('.service.health.query.fail');
+            console.log("err",err)
+            return;
+          } else { 
 
-      //has redis cache data to serve to the client 
-      var latency = Date.now() - start
-      console.log("reply")
-      statsDClient.timing('.service.health.query.latency_ms', latency);
-      statsDClient.increment('.service.health.query.cache');
-      //console.log('latency', latency);
-      res.send(reply);
-    }
-  })
+            console.log("Length", result.length);
+            var latency = Date.now() - start
+            statsDClient.timing('.service.health.query.latency_ms', latency);
+            statsDClient.increment('.service.health.query.db');
+            res.send(result);
+            //console.log('latency', latency);
+            redis.set(JSON.stringify(req.query), JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
+          }
+        })
+      } else{
+
+        //has redis cache data to serve to the client 
+        var latency = Date.now() - start
+        console.log("reply")
+        statsDClient.timing('.service.health.query.latency_ms', latency);
+        statsDClient.increment('.service.health.query.cache');
+        //console.log('latency', latency);
+        res.send(reply);
+      }
+    })
+    //else fetch from db and send to client
 })
 
 // app.get('/', function(req, res) {

@@ -136,6 +136,7 @@ var changeDate = function(string){
 // }
 
 var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
+  console.log("datbase stuff",zip, startDate, endDate, granularity);
   var query = 
   `select date_trunc('${granularity}', inspection_date) as ${granularity},
        sum((risk_category = 'High Risk')::int) as High,
@@ -153,7 +154,7 @@ var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
       callback(err, null)
 
     }else {
-      
+      console.log("DATAAABASE",res.rows)
       callback(null,res.rows)
     }
   })
