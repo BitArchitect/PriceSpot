@@ -40,7 +40,7 @@ let worker1 = async (callback) => {
  
     while (+result[0].count === 0 && date >= oldestDate ) {
       console.log("Inside While in worker")
-      datesArray.push(formatDate(date));
+      datesArray.push(util.formatDate(date));
       date.setDate(date.getDate()-1);
       result = await db.checkRowCountForDate(util.formatDate(date))
     }
