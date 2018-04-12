@@ -17,7 +17,9 @@ const app = express()
 app.use(bodyParser.json());
 let port = process.env.PORT || 3000;
 
-//get for particular zip code
+//Get inpection score for particular zip code, start date, end date, and grandularity. 
+//If data is not provided, do a default query with a default zip
+//default query is inpection data from last 3 month for zip = 94102
 
 app.get('/inspectionscore/*', function(req, res) {
   
@@ -33,28 +35,29 @@ app.get('/inspectionscore/*', function(req, res) {
 
   //Checking the redis if data exist for the zip
 
-    redis.get(JSON.stringify(req.query), function(err, reply){
+  redis.get(JSON.stringify(req.query), function(err, reply){
       if(reply === null) {
         console.log("No Cache, please wait");
         //Goes into the database to get the data per req.query
         db.getByZipByGran(zip,startDate, endDate, granularity, function(err, result){
           if(err) {
+            // Log failures for request with stats D, with process time 
             statsDClient.increment('.service.health.query.fail');
             console.log("err",err)
             return;
           } else { 
-            
+            //Log successful query to database and send to client-side
             var latency = Date.now() - start
             statsDClient.timing('.service.health.query.latency_ms', latency);
             statsDClient.increment('.service.health.query.db');
             res.send(result);
-            
+            //Set data into Redis cache for on hand availability 
             redis.set(JSON.stringify(req.query), JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
           }
         })
       } else{
-        
-        //has redis cache data to serve to the client 
+
+        //Data exist in Redis Cache and ready to server to the Client 
         var latency = Date.now() - start
         console.log("reply")
         statsDClient.timing('.service.health.query.latency_ms', latency);
@@ -62,45 +65,37 @@ app.get('/inspectionscore/*', function(req, res) {
         res.send(reply);
       }
     })
-    //else fetch from db and send to client
+  })
+
+//on initial page load serves last three of data for client-side
+app.get('/', function(req, res) {
+  console.log("PARAM", req.params)
+  var zip = '94102'
+  var start = Date.now();
+  var latency;
+  
+  //Check if data is available in the Redis Case
+  redis.get(zip, function(err, reply){
+    
+    if(reply === null) {
+      console.log("No Cache, please wait");
+      db.getlastThreeMonths(zip, function(result){
+        console.log("Length", result.length);
+        res.send(result);
+        var latency = Date.now() - start
+        console.log('latency', latency);
+        redis.set(zip, JSON.stringify(result), 'EX', 300, console.log('OK'));
+        
+      })
+    } else{
+      //Data is available in the Redis Cache to sever to Client
+      console.log("reply")
+      var latency = Date.now() - start
+      console.log('latency', latency);
+      res.send(reply);
+    }
+  })
 })
-
-// app.get('/', function(req, res) {
-//   console.log("PARAM", req.params)
-//   var zip = '94102'
-//   var start = Date.now();
-//   var latency;
-
-//   redis.get(zip, function(err, reply){
-//     //console.log("typeOF", reply)
-//     if(reply === null) {
-//       console.log("No Cache, please wait");
-//       db.getlastThreeMonths(zip, function(result){
-//         console.log("Length", result.length);
-//         res.send(result);
-//         var latency = Date.now() - start
-//         console.log('latency', latency);
-//         redis.set(zip, JSON.stringify(result), 'EX', 300, console.log('OK'));
-//         //res.send(JSON.parse(result));
-//       })
-//     } else{
-//       console.log("reply")
-//       var latency = Date.now() - start
-//       console.log('latency', latency);
-//       res.send(reply);
-//     }
-//   })
-// })
-
-// redis example 
-// var key = "scott"
-// redis.client.set(key, "is here", console.log('OK'));
-
-// redis.client.get(key, function(err, reply) {
-//     // reply is null when the key is missing 
-//     console.log("cache",key +':'+reply);
-// });
-
 
 
 app.listen(port, function () {
