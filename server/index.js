@@ -17,15 +17,12 @@ const app = express()
 app.use(bodyParser.json());
 let port = process.env.PORT || 3000;
 
-
-//console.log("localredis", redis);
 //get for particular zip code
 
 app.get('/inspectionscore/*', function(req, res) {
-  console.log("PARAM", req.query)
-
+  
   statsDClient.increment('.service.health.query.all')
-  //re.query parmaters from client, if none passed , then set to default
+  //req.query parmaters from client, if none passed , then set to default
   var zip = !req.query.zip ? '94102' : req.query.zip;
   var startDate = !req.query.startDate ? util.formatDate(util.createDateBack(3)) : req.query.startDate
   var endDate = !req.query.endDate ? util.formatDate(new Date()) : req.query.endDate
@@ -34,16 +31,11 @@ app.get('/inspectionscore/*', function(req, res) {
   var start = Date.now();
   var latency;
 
-  //check if the redis is on ?
-  //if(redis) 
   //Checking the redis if data exist for the zip
 
     redis.get(JSON.stringify(req.query), function(err, reply){
-
       if(reply === null) {
-
         console.log("No Cache, please wait");
-
         //Goes into the database to get the data per req.query
         db.getByZipByGran(zip,startDate, endDate, granularity, function(err, result){
           if(err) {
@@ -51,24 +43,22 @@ app.get('/inspectionscore/*', function(req, res) {
             console.log("err",err)
             return;
           } else { 
-
-            console.log("Length", result.length);
+            
             var latency = Date.now() - start
             statsDClient.timing('.service.health.query.latency_ms', latency);
             statsDClient.increment('.service.health.query.db');
             res.send(result);
-            //console.log('latency', latency);
+            
             redis.set(JSON.stringify(req.query), JSON.stringify(result), 'EX', 60*60 , console.log('OK'));
           }
         })
       } else{
-
+        
         //has redis cache data to serve to the client 
         var latency = Date.now() - start
         console.log("reply")
         statsDClient.timing('.service.health.query.latency_ms', latency);
         statsDClient.increment('.service.health.query.cache');
-        //console.log('latency', latency);
         res.send(reply);
       }
     })
@@ -102,7 +92,7 @@ app.get('/inspectionscore/*', function(req, res) {
 //   })
 // })
 
-
+// redis example 
 // var key = "scott"
 // redis.client.set(key, "is here", console.log('OK'));
 
@@ -111,9 +101,6 @@ app.get('/inspectionscore/*', function(req, res) {
 //     console.log("cache",key +':'+reply);
 // });
 
-// govData.worker1(function(err, result){
-//   console.log("success", result);
-// });
 
 
 app.listen(port, function () {
