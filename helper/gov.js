@@ -4,15 +4,15 @@ const db = require ('../database/index.js')
 const gen = require ('../generate/generator.js');
 const key = process.env.DATA_SF_KEY;
 const util = require('../utility/util.js')
-////https://data.sfgov.org/resource/sipz-fjte.json?$where=inspection_date > '2017-06-10T12:00:00' AND  inspection_date  < '2017-09-10T12:00:00'
 
+//request to Gov API
 let getRestaurantData = (datewithT, callback) => {
 
   let options = {
     url: `https://data.sfgov.org/resource/sipz-fjte.json?inspection_date=${datewithT}`,
     type: 'GET',
     qs: {
-      '$$app_token': key || 'n4t5ommVtFTmQWxUNTaFfgydB', 
+      '$$app_token': key || '', 
       '$limit': '5000'
     }
   };
@@ -28,13 +28,12 @@ let getRestaurantData = (datewithT, callback) => {
   });
 }
 
+// Update database on a daily basis
 let worker1 = async (callback) => {
-  console.log("step 1 in worker")
+  //gather all dates missing
   var datesArray = [];
   var date = new Date();
-  
   let result = await db.checkRowCountForDate(util.formatDate(date))
- 
  
   var oldestDate = new Date('2014-10-24');
  
@@ -45,13 +44,10 @@ let worker1 = async (callback) => {
       result = await db.checkRowCountForDate(util.formatDate(date))
     }
 
-
-    console.log("Days Missing", datesArray);
-
     datesArray.forEach(function(date) {
       var apiDate = util.formatDateForAPI(date);
-      //console.log("APIDATE", apiDate);
-
+      
+      //Get data for missing dates and update database
       getRestaurantData(apiDate,function(err, result){
         if(err) {
           console.log("err",err)
