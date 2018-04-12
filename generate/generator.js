@@ -1,5 +1,8 @@
 var db = require ('../database/index.js')
 
+/*
+This data generator is only used for only for testing purposes.
+*/
 
 var sfZip = ['94102', '94103', '94104', '94105', '94107', 
              '94108', '94109', '94110', '94111', '94112', 
@@ -68,11 +71,6 @@ var singleDataGen = function() {
     return obj;
 }
 
-//console.log(fakeDataGen(2));
-
-//console.log(fakeDataGen());
-
-
 /*data example need 
 { 
   business_postal_code: '94116',
@@ -84,7 +82,7 @@ var singleDataGen = function() {
 */
 
  var insertFakeData = (num) => {
-
+   
   var data = fakeArrDataGen(num);
   db.save(data, function(result){
     console.log("ALL FAke data inserted")
