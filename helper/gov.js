@@ -7,7 +7,6 @@ const util = require('../utility/util.js')
 
 //request to Gov API
 let getRestaurantData = (datewithT, callback) => {
-
   let options = {
     url: `https://data.sfgov.org/resource/sipz-fjte.json?inspection_date=${datewithT}`,
     type: 'GET',
@@ -22,13 +21,14 @@ let getRestaurantData = (datewithT, callback) => {
       callback(error, null)
     }else {
       body = JSON.parse(body)
-      //console.log("BODY",body[0]);
       callback(null,body);
     }
   });
 }
 
-// Update database on a daily basis
+/* Update database on a daily basis. This worker job is to check the Inspection data for dates that are not yet
+in our database. 
+*/
 let worker1 = async (callback) => {
   //gather all dates missing
   var datesArray = [];
@@ -37,32 +37,30 @@ let worker1 = async (callback) => {
  
   var oldestDate = new Date('2014-10-24');
  
-    while (+result[0].count === 0 && date >= oldestDate ) {
-      console.log("Inside While in worker")
-      datesArray.push(util.formatDate(date));
-      date.setDate(date.getDate()-1);
-      result = await db.checkRowCountForDate(util.formatDate(date))
-    }
+  while (+result[0].count === 0 && date >= oldestDate ) {
 
-    datesArray.forEach(function(date) {
-      var apiDate = util.formatDateForAPI(date);
-      
-      //Get data for missing dates and update database
-      getRestaurantData(apiDate,function(err, result){
-        if(err) {
-          console.log("err",err)
-        } else{
-          if(Array.isArray(result) && result.length > 0 ) {
-            db.save(result, function(result){ 
-              console.log("sucessfull into the database with update to date DATE");
-            })
-           }
-           console.log("please come back at later time");
-        }
-      })
+    datesArray.push(util.formatDate(date));
+    date.setDate(date.getDate()-1);
+    result = await db.checkRowCountForDate(util.formatDate(date))
+  }
 
+  datesArray.forEach(function(date) {
+    var apiDate = util.formatDateForAPI(date);
+    
+    //Get data for missing dates and update database
+    getRestaurantData(apiDate,function(err, result){
+      if(err) {
+        console.log("err",err)
+      } else{
+        if(Array.isArray(result) && result.length > 0 ) {
+          db.save(result, function(result){ 
+            console.log("sucessfull into the database with update to date DATE");
+          })
+         }
+         console.log("please come back at later time");
+      }
     })
-  
+  }) 
 }
 
 module.exports = {
