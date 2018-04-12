@@ -4,15 +4,12 @@ const pgp = require('pg-promise')();
 const connectionString = process.env.DATABASE_URL || 'postgresql://localhost:5432/test';
 const clientPromise = pgp(process.env.DATABASE_URL || 'postgresql://localhost:5432/test');
 
-
 const client = new pg.Client({
   connectionString: connectionString,
 })
 client.connect()
 
-
-
-
+//check database if inspecction data for particular date exists
 var checkRowCountForDate = function (date, callback){
   var query = `SELECT count(*) FROM restaurantscore WHERE inspection_date = '${date}'`;
   return clientPromise.query(query)
@@ -24,6 +21,7 @@ var checkRowCountForDate = function (date, callback){
   })   
 }
 
+// save inpection data to the database
 var save = function(result, callback) {
   result.map((entry) => { 
     var zip = entry.business_postal_code;
@@ -31,7 +29,6 @@ var save = function(result, callback) {
     var inspectionDate = entry.inspection_date.includes('T') ? changeDate(entry.inspection_date) : entry.inspection_date;
     var inspectionType = entry.inspection_type;
     var risk = entry.risk_category;
-    //console.log("risk", risk);
 
     var query = `INSERT INTO restaurantscore (
                     business_zip,
@@ -42,8 +39,8 @@ var save = function(result, callback) {
                    ) 
                   VALUES 
                     ($1,$2,$3,$4,$5)
-
                     `
+    
     client.query(query,[zip,inspectionId,inspectionDate, inspectionType, risk], function(err, res){
       if(err){
         console.log("errhhh", err)
@@ -55,65 +52,32 @@ var save = function(result, callback) {
   })
 }
 
-
-// var save = function(result, callback) {
-//   result.map((entry) => { 
-//     console.log("ENTRY", entry);
-//     var zip = entry.business_postal_code;
-//     var inspectionId = entry.inspection_id;
-//     var inspectionDate = entry.inspection_date.includes('T') ? changeDate(entry.inspection_date) : entry.inspection_date;
-//     var inspectionType = entry.inspection_type;
-//     var risk = entry.risk_category;
-//     //console.log("risk", risk);
-
-//     var query = `INSERT INTO restaurantscore (
-//                     business_zip,
-//                     inspection_id,
-//                     inspection_date,
-//                     inspection_type,
-//                     risk_category
-//                    ) 
-//                   VALUES 
-//                     ($1,$2,$3,$4,$5)
-
-//                     `
-//     client.query(query,[zip,inspectionId,inspectionDate, inspectionType, risk], function(err, res){
-//       if(err){
-//         console.log("errhhh", err)
-//         callback(err, null)
-//       } else {
-//         callback("success into database")
-//       }
-//     })
-//   })
-// }
-
-
+//save single inspection to the database (used for data generator for testing)
 var saveSingle = function(entry, callback) {
-    var zip = entry.business_postal_code;
-    var inspectionId = entry.inspection_id;
-    var inspectionDate = entry.inspection_date.includes('T') ? changeDate(entry.inspection_date) : entry.inspection_date;
-    var inspectionType = entry.inspection_type;
-    var risk = entry.risk_category;
-    var query = `INSERT INTO restaurantscore (
-                    business_zip,
-                    inspection_id,
-                    inspection_date,
-                    inspection_type,
-                    risk_category
-                   ) 
-                  VALUES 
-                    ($1,$2,$3,$4,$5)
-
-                    `
-    client.query(query,[zip,inspectionId,inspectionDate, inspectionType, risk], function(err, res){
-      if(err){
-        callback(err, null)
-      } else {
-        callback("success into database")
-      }
-    })
+  var zip = entry.business_postal_code;
+  var inspectionId = entry.inspection_id;
+  var inspectionDate = entry.inspection_date.includes('T') ? changeDate(entry.inspection_date) : entry.inspection_date;
+  var inspectionType = entry.inspection_type;
+  var risk = entry.risk_category;
+  var query = `INSERT INTO restaurantscore (
+                  business_zip,
+                  inspection_id,
+                  inspection_date,
+                  inspection_type,
+                  risk_category
+                 ) 
+                VALUES 
+                  ($1,$2,$3,$4,$5)
+                  `
+  client.query(query,[zip,inspectionId,inspectionDate, inspectionType, risk], function(err, res){
+    if(err){
+      callback(err, null)
+    } else {
+      callback("success into database")
+    }
+  })
 }
+
 //changes the inspection date to correct formate '2017-09-26 00:00:00' from '2017-09-26T00:00:00.000'
 var changeDate = function(string){
   var chars = string.split("");
@@ -123,18 +87,7 @@ var changeDate = function(string){
   return chars.join("");
 }
 
-// var getByZip = function(zip, callback) {
-//   var query = `select (*) from restaurantscore where business_zip = '${zip}'`;
-//   client.query(query, function (err, res) {
-//     if(err){
-//       callback(err, null)
-//     }else {
-//       // console.log("ghgjgjgjgjg",res)
-//       callback(res.rows)
-//     }
-//   })
-// }
-
+//get information by granduarlity with zip
 var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
   console.log("datbase stuff",zip, startDate, endDate, granularity);
   var query = 
@@ -146,7 +99,8 @@ var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
   from restaurantscore
   where business_zip = '${zip}' and inspection_date > '${startDate}' and inspection_date < '${endDate}'
   group by ${granularity}
-  order by ${granularity};`;
+  order by ${granularity};`
+  
   client.query(query, function (err, res) {
     if(err){
       console.log("THIS ERROR", err);
@@ -154,12 +108,12 @@ var getByZipByGran = function(zip, startDate, endDate, granularity, callback) {
       callback(err, null)
 
     }else {
-      console.log("DATAAABASE",res.rows)
       callback(null,res.rows)
     }
   })
 }
 
+//get inspection datat for last 3 months with zip
 var getlastThreeMonths = function (zip, callback) {
   var query = 
   `SELECT business_zip, 
